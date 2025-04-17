@@ -5,7 +5,7 @@ import numpy as np
 # === 1. Chargement des données ===
 @st.cache_data
 def load_data():
-    return pd.read_excel("/content/sample_data/utilisateurs_avec_score_engagement.xlsx")
+    return pd.read_excel("utilisateurs_avec_score_engagement.xlsx")
 
 df = load_data()
 
@@ -52,10 +52,3 @@ with st.expander("📈 Voir les statistiques globales"):
 # === 8. Footer ===
 st.markdown("---")
 st.caption("Projet - M2 Data Management • Streamlit Dashboard - Moteur de recommandation")
-
-
-# Cellule 3 - Téléversement des données (si nécessaire)
-from google.colab import files
-uploaded = files.upload()  # Sélectionnez votre fichier Excel
-
-!streamlit run app.py & npx localtunnel --port 8501
