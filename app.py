@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# === Configuration de la page ===
+st.set_page_config(page_title="Moteur de Recommandation - Engagement", layout="centered")
+
 # === 1. Chargement des données ===
 @st.cache_data
 def load_data():
@@ -12,10 +15,52 @@ df = load_data()
 df["score_sur_10"] = (df["score_engagement"] * 10).round(1)
 clusters = df["cluster_label"].unique()
 
+# === Ajouter les recommandations personnalisées selon les clusters ===
+def assign_recommendation(cluster):
+    mapping = {
+        "Le fantôme": "📧 Relance email + contenu incitatif.",
+        "Le curieux discret": "🔔 Notification personnalisée + article recommandé.",
+        "Le power user": "🏆 Accès premium, badges, remerciements."
+    }
+    return mapping.get(cluster, "❓ Aucune recommandation disponible.")
+
+df["recommandation"] = df["cluster_label"].apply(assign_recommendation)
+
+
 # === 3. Titre et introduction ===
-st.set_page_config(page_title="Moteur de Recommandation - Engagement", layout="centered")
 st.title("🎯 Moteur de Recommandation - Engagement Utilisateur")
 st.markdown("Ce tableau de bord permet de visualiser le niveau d'engagement des utilisateurs et propose des actions adaptées aux différents profils détectés.")
+
+# === 3.5. Filtrage des utilisateurs ===
+st.subheader("🔎 Filtrer les utilisateurs")
+
+# Colonnes à afficher dans le tableau
+colonnes_a_afficher = [
+    "visitor_id", "first_session_yyyymmdd",
+    "nb_sessions", "nb_requests",
+    "cluster_label", "score_engagement", "recommandation"
+]
+
+# Filtre : choix du cluster (multiselect)
+clusters_disponibles = sorted(df["cluster_label"].unique())
+cluster_filtre = st.multiselect("Filtrer par persona (cluster) :", clusters_disponibles, default=clusters_disponibles)
+
+# Filtre : plage de score d'engagement
+min_score = float(df["score_engagement"].min())
+max_score = float(df["score_engagement"].max())
+score_range = st.slider("Score d'engagement (entre 0 et 1) :", min_score, max_score, (min_score, max_score))
+
+# Application des filtres
+df_filtered = df[
+    (df["cluster_label"].isin(cluster_filtre)) &
+    (df["score_engagement"] >= score_range[0]) &
+    (df["score_engagement"] <= score_range[1])
+]
+
+# Affichage du tableau filtré
+st.markdown("**Utilisateurs filtrés :**")
+st.dataframe(df_filtered[colonnes_a_afficher].reset_index(drop=True))
+
 
 # === 4. Sélection d'utilisateur ===
 selected_user = st.selectbox("👤 Choisir un utilisateur :", df["visitor_id"].unique())
@@ -70,7 +115,6 @@ reco_data = pd.DataFrame({
     ]
 })
 
-# Affichage sous forme de tableau interactif
 st.dataframe(reco_data)
 
 # === 9. Footer ===
